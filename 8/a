@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+my @lines = `cat $ARGV[0]`;
+chomp @lines;
+
+my @instr = map {; [ split /\s+/, $_, 2 ] } @lines;
+
+use Data::Dumper::Concise;
+print Dumper(\@instr);
+
+sub run_program {
+  my $pc  = 0;
+  my $acc = 0;
+
+  my %seen;
+
+  while ($pc < @instr) {
+    my $instr = $instr[$pc];
+
+    $seen{$pc}++;
+
+    warn "will execute instruction $pc [@$instr]\n";
+
+    if ($seen{$pc} == 2) {
+      warn "about to run instruction $pc 2nd time! acc is $acc\n";
+      return -1;
+    }
+
+    if ($instr->[0] eq 'nop') { $pc++; next }
+    if ($instr->[0] eq 'acc') { $pc++; $acc += $instr->[1]; next }
+    if ($instr->[0] eq 'jmp') { $pc  += $instr->[1]; next }
+
+    die "unknown instr [@$instr]\n";
+  }
+
+  warn "program completed, acc is $acc\n";
+  return 0;
+}
+
+for my $i (0 .. $#instr) {
+  my $op = $instr[$i][0];
+  next if $op eq 'acc';
+
+  $instr[$i][0] = $op eq 'jmp' ? 'nop' : 'jmp';
+  my $rv = run_program;
+  say $rv;
+  if ($rv == 0) {
+    warn "swapped op $i\n";
+    exit;
+  }
+
+  $instr[$i][0] = $op;
+}
+

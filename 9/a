@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+use experimental 'signatures';
+
+my $len = $ARGV[0];
+my @nums = `cat $ARGV[1]`;
+chomp @nums;
+
+sub works ($need, @nums) {
+  for (1 .. @nums) {
+    my $n = shift @nums;
+    return 1 if grep { $n + $_ == $need } @nums;
+    push @nums, $n;
+  }
+  return 0;
+}
+
+my $magic;
+
+for (my $i = $len; $i < @nums; $i++) {
+  my $need = $nums[$i];
+  my @last = @nums[ $i - $len .. $i - 1];
+  warn "$i : make $need from [@last]\n";
+  unless (works($need, @last)) {
+    $magic = $need;
+    warn "invalid number: $magic\n";
+    last;
+  }
+}
+
+START: for my $i (0 .. $#nums) {
+  next if $nums[$i] > $magic;
+
+  my $sum = $nums[$i];
+  my @arr = $sum;
+
+  for my $j (($i+1) .. $#nums) {
+    $sum += $nums[$j];
+    push @arr, $nums[$j];
+
+    next START if $sum > $magic;
+    if ($sum == $magic) {
+      @arr = sort { $a <=> $b } @arr;
+      my $x = $arr[0] + $arr[-1];
+      die "GOT IT: @arr -- $x\n"
+    }
+  }
+}

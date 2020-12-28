@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+my %field = (
+  byr => sub { 1920 <= $_[0] <= 2002 }, # Birth Year
+  iyr => sub { 2010 <= $_[0] <= 2020 }, # Issue Year
+  eyr => sub { 2020 <= $_[0] <= 2030 }, # Expiration Year
+  hgt => sub {
+    my ($n, $u) = $_[0] =~ /\A([0-9]+)(cm|in)\z/;
+    return unless $n and $u;
+    if ($u eq 'cm') { return 150 <= $n <= 193 }
+    if ($u eq 'in') { return  59 <= $n <=  76 }
+    return;
+  },
+  hcl => sub { $_[0] =~ /\A#[0-9a-f]{6}\z/ }, # Hair Color
+  ecl => sub {
+    # Eye Color
+    state $ok = { map {; $_ => 1 } qw(amb blu brn gry grn hzl oth) };
+    return $ok->{ $_[0] };
+  },
+  pid => sub { $_[0] =~ /\A[0-9]{9}\z/ }, # Passport ID
+  cid => undef,
+);
+
+my $content = do { local $/; <ARGV> };
+my @records = split /\n\n/, $content;
+
+my $WANT = join '-', sort keys %field;
+
+my $valid = 0;
+
+REC: for my $record (@records) {
+  $record =~ s/\v/ /g;
+  my @pairs = split /\s+/, $record;
+
+  my %rec;
+  for my $pair (@pairs) {
+    my ($k, $v) = split /:/, $pair, 2;
+    $rec{$k} = $v;
+  }
+
+  $rec{cid} = 'virtual' unless exists $rec{cid};
+
+  my $have = join '-', sort keys %rec;
+
+  next unless $have eq $WANT;
+  for my $key (keys %field) {
+    next REC if $field{$key} && ! $field{$key}->( $rec{$key} );
+  }
+
+  $valid++;
+}
+
+say "VALID: $valid";

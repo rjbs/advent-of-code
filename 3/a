@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+use autodie;
+
+my $fn = $ARGV[0] // "3/input.txt";
+open my $fh, '<', $fn;
+
+my @lines = <$fh>;
+chomp @lines;
+
+my $width = length $lines[0]; # Assume no evil intent. -- rjbs, 2020-12-27
+my $max_y = $#lines;
+
+my $product = 1;
+
+for my $slope (
+  [ 1, 1 ],
+  [ 3, 1 ],
+  [ 5, 1 ],
+  [ 7, 1 ],
+  [ 1, 2 ],
+) {
+  my ($dx, $dy) = @$slope;
+
+  my $x     = 0;
+  my $trees = 0; # Assume there is never a tree at 0,0.
+
+  for (my $y = $dy; $y <= $max_y; $y += $dy) {
+    $x += $dx;
+    my $vx = $x % $width;
+    my $char = substr $lines[$y], $vx, 1;
+    $trees++ if $char eq '#';
+
+    printf "%3i[%3i], %3i - %s\n", $x, $vx, $y, $char;
+  }
+
+  say "m=[$dx,$dy] - TOTAL TREE COUNT: $trees";
+
+  $product *= $trees;
+}
+
+say "PI = $product";
+

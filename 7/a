@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+use experimental 'signatures';
+
+my %limits_for;
+
+for (<>) {
+  chomp;
+  my ($type, $rest) = /\A(.+?) bags contain (.+)\.\z/;
+  my @contents = split /, /, $rest;
+
+  if ($rest eq 'no other bags') {
+    $limits_for{$type} = {};
+    next;
+  }
+
+  for my $rule (@contents) {
+    my ($n, $color) = $rule =~ /\A([0-9]+) (.+?) bags?\z/;
+    $limits_for{$type}{$color} = $n;
+  }
+}
+
+use Data::Dumper;
+print Dumper(\%limits_for);
+
+{
+  my $found = 0;
+  for my $type (keys %limits_for) {
+    my $total = find_limits($type);
+
+    $found ++ if $total->{'shiny gold'};
+  }
+
+  say "Types containing shiny gold: $found";
+}
+
+{
+  my $type = 'shiny gold';
+  my $got = contains($type);
+  say "1 $type contains $got bags total";
+}
+
+#---
+
+sub find_limits ($type, $total = undef) {
+  my %limits = $limits_for{$type}->%*;
+
+  for my $key (keys %limits) {
+    $total->{$key} += $limits{$key};
+    find_limits($key, $total);
+  }
+
+  return $total;
+}
+
+sub contains ($type, $n = 1) {
+  my $total = $n;
+
+  my $limits = $limits_for{$type};
+
+  warn Dumper([ $type, $limits ]);
+  for my $key (keys %$limits) {
+    $total += $n * contains($key, $limits->{$key});
+  }
+
+  warn "adding $n $type bags ($total)\n";
+  return $total;
+}
+

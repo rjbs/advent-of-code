@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+my $content = do { local $/; <ARGV> };
+my @records = split /\n\n/, $content;
+
+my $total;
+for my $record (@records) {
+  my @people = split /\n/, $record;
+
+  my %q;
+  for my $person (@people) {
+    $q{$_}++ for split //, $person;
+  }
+
+  $total += grep { @people == $q{$_} } keys %q;
+}
+
+say "TOTAL: $total";

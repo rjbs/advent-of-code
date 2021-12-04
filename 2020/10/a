@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+use v5.30.0;
+use warnings;
+
+my @adapters = `cat $ARGV[0]`;
+chomp @adapters;
+
+@adapters = sort {$a<=>$b} @adapters;
+
+my $built_in = $adapters[-1] + 3;
+
+say "@adapters // $built_in";

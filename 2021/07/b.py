@@ -8,8 +8,12 @@ with open(file) as f:
 best_i = None
 best_t = None
 
+cost = [ 0 ]
+for i in range(1, max(crab)+1):
+    cost += [ cost[i-1] + i ]
+
 for target in range(len(crab)):
-    total = sum(map(lambda c: abs(target - c), crab))
+    total = sum(map(lambda c: cost[ abs(target - c) ], crab))
 
     if best_i is None or (best_t is not None and best_t > total):
         best_i = target
